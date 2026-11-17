@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../views/Home'
 import Tabletop from '../views/Tabletop'
@@ -9,11 +8,10 @@ import Doc_hall from '../views/Doc_hall'
 import Authc_list from '../views/Authc_list'
 import Audit from '../views/Audit'
 import Login from '../views/Login'
+import { getToken } from '../utils/auth'
 
-Vue.use(Router)
-
-const router = new Router({
-  mode: 'history',
+const router = createRouter({
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
@@ -63,22 +61,21 @@ const router = new Router({
     },
     // 未匹配到的地址统一回到桌面，避免出现空白页
     {
-      path: '*',
+      path: '/:pathMatch(.*)*',
       redirect: '/home/tabletop'
     }
   ],
   scrollBehavior() {
-    return { x: 0, y: 0 }
+    return { left: 0, top: 0 }
   }
 })
 
-router.beforeEach((to, from, next) => {
-  if (to.path === '/login') return next()
-  const token = window.sessionStorage.getItem('token')
-  if (!token) {
-    return next({ path: '/login', query: { redirect: to.fullPath } })
+router.beforeEach(to => {
+  if (to.path === '/login') return true
+  if (!getToken()) {
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
-  next()
+  return true
 })
 
 export default router

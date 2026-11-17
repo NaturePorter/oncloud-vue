@@ -1,7 +1,7 @@
 <template>
   <div>
     <!--导航区域-->
-    <el-breadcrumb separator-class="el-icon-arrow-right">
+    <el-breadcrumb :separator-icon="ArrowRight">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>我的桌面</el-breadcrumb-item>
     </el-breadcrumb>
@@ -9,7 +9,7 @@
     <el-row :gutter="20">
       <el-col :span="12">
         <el-card shadow="hover">
-          <div slot="header">个人信息</div>
+          <template #header>个人信息</template>
           <p class="line">欢迎来到 ONCLOUD，{{ userInfo.username }}！</p>
           <p class="line">您的身份：{{ userInfo.role }}</p>
           <p class="line">您的状态：{{ userInfo.state == 1 ? '已启用' : '已停用' }}</p>
@@ -17,7 +17,7 @@
       </el-col>
       <el-col :span="12">
         <el-card shadow="hover">
-          <div slot="header">当前时间</div>
+          <template #header>当前时间</template>
           <p class="clock">{{ now }}</p>
         </el-card>
       </el-col>
@@ -26,10 +26,14 @@
 </template>
 
 <script>
+import { ArrowRight } from '@element-plus/icons-vue'
 import { formatDate } from '../utils/format'
 
 export default {
   name: 'Tabletop',
+  setup() {
+    return { ArrowRight }
+  },
   data() {
     return {
       userInfo: {},
@@ -40,7 +44,7 @@ export default {
   methods: {
     async getUserInfo() {
       try {
-        const { data: res } = await this.axios.get('/user')
+        const { data: res } = await this.$http.get('/user')
         if (res.meta.status === 200) {
           this.userInfo = res.data
         }
@@ -59,7 +63,7 @@ export default {
     this.updateTime()
     this.timer = window.setInterval(this.updateTime, 1000)
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.clearInterval(this.timer)
   }
 }

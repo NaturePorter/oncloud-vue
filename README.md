@@ -1,6 +1,6 @@
 # ONCLOUD 文档管理系统（前端）
 
-Vue 2.7 + Element UI 实现的文档管理系统前端，后端仓库见
+Vue 3 + Element Plus 实现的文档管理系统前端，后端仓库见
 [oncloud-springboot](https://github.com/NaturePorter/oncloud-springboot)。
 
 ## 快速开始
@@ -54,8 +54,12 @@ location /api/ {
 
 - 原项目缺少 `build/` 目录（webpack 配置从未提交），且 `webpack 3 + node-sass 4` 无法在
   现代 Node 环境运行，`npm run dev/build` 完全不可用。
-- 迁移到 **Vite 6 + Vue 2.7**，保留原有 Vue 2 / Element UI 写法与页面结构，删除失效的
-  webpack/babel 配置，开发与构建可直接在 Node 18+ 运行。
+- 迁移到 **Vite 6 + Vue 3 + Element Plus**，删除失效的 webpack/babel 配置，
+  开发与构建可直接在 Node 18+ 运行。
+- Vue 2.7 / Element UI 均已停止维护且存在无修复版本的安全告警（Vue 2 运行时模板
+  编译 ReDoS、Element UI 依赖链漏洞），已升级到 Vue 3.5 + Element Plus 2.14；
+  页面结构与交互保持不变，`slot-scope`/`slot` 改为 `#default`/`#` 具名插槽，
+  图标改用 `@element-plus/icons-vue`。
 
 ### 功能缺陷
 
@@ -63,7 +67,7 @@ location /api/ {
 - 下载使用 `<a href>` 直链，无法携带 token，必然下载失败；改为 axios 请求 blob 后保存，
   并正确处理后端返回的 JSON 错误。
 - `el-switch` 上使用 `v-model="row.isshared == 1"`（不是合法左值），模板编译报错；改为
-  `:value` + `@change` 并在成功后更新行数据。
+  `:model-value` + `@change` 并在成功后更新行数据。
 - 菜单项地址缺少 `/home/` 前缀，且存在指向未实现页面（角色管理、菜单管理）的菜单；已统一
   拼接路由前缀，并用兜底路由避免空白页。
 - 表格多选相关的死代码（`docSelection`、错误的 `this` 指向）已删除。

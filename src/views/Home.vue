@@ -4,10 +4,15 @@
     <el-header class="home_header">
       <img src="../assets/header_logo.png" class="logo" alt="ONCLOUD"/>
       <el-dropdown class="user_dropdown" @command="handleCommand">
-        <span class="user_info"><i class="el-icon-user"></i> {{ username }}</span>
-        <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-        </el-dropdown-menu>
+        <span class="user_info">
+          <el-icon><User /></el-icon>
+          {{ username }}
+        </span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
       </el-dropdown>
     </el-header>
 
@@ -15,7 +20,8 @@
       <!--侧边栏-->
       <el-aside :width="isCollapse ? '64px' : '200px'" class="home_aside">
         <div class="toggle-button" @click="isCollapse = !isCollapse">
-          <i :class="isCollapse ? 'el-icon-s-unfold' : 'el-icon-s-fold'"></i>
+          <el-icon v-if="isCollapse"><Expand /></el-icon>
+          <el-icon v-else><Fold /></el-icon>
         </div>
         <el-menu
           router
@@ -25,19 +31,19 @@
           background-color="#9dae28"
           text-color="#ffffff"
           active-text-color="#ffd04b">
-          <template v-for="item in menu">
-            <el-submenu v-if="item.list && item.list.length" :key="item.menuId" :index="String(item.menuId)">
-              <template slot="title">
-                <i class="el-icon-menu"></i>
+          <template v-for="item in menu" :key="item.menuId">
+            <el-sub-menu v-if="item.list && item.list.length" :index="String(item.menuId)">
+              <template #title>
+                <el-icon><Menu /></el-icon>
                 <span>{{ item.name }}</span>
               </template>
               <el-menu-item v-for="child in item.list" :key="child.menuId" :index="'/home/' + child.url">
                 {{ child.name }}
               </el-menu-item>
-            </el-submenu>
-            <el-menu-item v-else :key="item.menuId" :index="'/home/' + item.url">
-              <i class="el-icon-document"></i>
-              <span slot="title">{{ item.name }}</span>
+            </el-sub-menu>
+            <el-menu-item v-else :index="'/home/' + item.url">
+              <el-icon><Document /></el-icon>
+              <template #title>{{ item.name }}</template>
             </el-menu-item>
           </template>
         </el-menu>
@@ -52,10 +58,12 @@
 </template>
 
 <script>
+import { User, Menu, Document, Fold, Expand } from '@element-plus/icons-vue'
 import { getToken, removeToken } from '../utils/auth'
 
 export default {
   name: 'Home',
+  components: { User, Menu, Document, Fold, Expand },
   data() {
     return {
       isCollapse: false,
@@ -66,7 +74,7 @@ export default {
   methods: {
     async getMenu() {
       try {
-        const { data: res } = await this.axios.get('/menu')
+        const { data: res } = await this.$http.get('/menu')
         if (res.meta.status !== 200) return this.$message.error(res.meta.msg || '获取菜单失败')
         this.menu = res.data || []
       } catch (e) {
@@ -75,7 +83,7 @@ export default {
     },
     async getUserInfo() {
       try {
-        const { data: res } = await this.axios.get('/user')
+        const { data: res } = await this.$http.get('/user')
         if (res.meta.status === 200) {
           this.username = res.data.username
         }
@@ -86,7 +94,7 @@ export default {
     async handleCommand(command) {
       if (command !== 'logout') return
       try {
-        await this.axios.post('/logout')
+        await this.$http.post('/logout')
       } catch (e) {
         // 即使后端退出失败，本地也要清理登录态
       }
@@ -123,6 +131,9 @@ export default {
   }
 
   .user_info {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     color: #ffffff;
     cursor: pointer;
     font-size: 14px;
@@ -141,11 +152,16 @@ export default {
   .toggle-button {
     color: #ffffff;
     text-align: center;
-    line-height: 40px;
+    padding: 12px 0;
     cursor: pointer;
   }
 
-  .home_aside ::v-deep .el-menu {
+  .toggle-button .el-icon {
+    font-size: 18px;
+    vertical-align: middle;
+  }
+
+  .home_aside :deep(.el-menu) {
     border-right: none;
   }
 

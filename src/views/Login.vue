@@ -6,14 +6,14 @@
         <img src="../assets/oc_logo.png" alt="logo"/>
       </div>
       <el-form class="login_form" ref="loginForm" :model="loginForm" :rules="loginFormRules"
-               label-width="0" @submit.native.prevent>
+               label-width="0" @submit.prevent>
         <el-form-item prop="username">
-          <el-input v-model="loginForm.username" prefix-icon="el-icon-user-solid" type="text"
+          <el-input v-model="loginForm.username" :prefix-icon="User" type="text"
                     placeholder="用户名" name="username"></el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" prefix-icon="el-icon-lock" type="password"
-                    placeholder="密码" name="password" @keyup.enter.native="login"></el-input>
+          <el-input v-model="loginForm.password" :prefix-icon="Lock" type="password"
+                    placeholder="密码" name="password" @keyup.enter="login"></el-input>
         </el-form-item>
         <el-form-item class="btns">
           <el-button type="primary" :loading="loginLoading" @click="login">登录</el-button>
@@ -25,10 +25,14 @@
 </template>
 
 <script>
+import { User, Lock } from '@element-plus/icons-vue'
 import { setToken } from '../utils/auth'
 
 export default {
   name: 'login',
+  setup() {
+    return { User, Lock }
+  },
   data() {
     return {
       loginLoading: false,
@@ -57,7 +61,7 @@ export default {
           const form = new URLSearchParams()
           form.append('username', this.loginForm.username)
           form.append('password', this.loginForm.password)
-          const { data: res } = await this.axios.post('/login', form)
+          const { data: res } = await this.$http.post('/login', form)
           if (res.meta.status !== 200) {
             return this.$message.error(res.meta.msg)
           }

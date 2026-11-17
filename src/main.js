@@ -1,7 +1,7 @@
-import Vue from 'vue'
-import ElementUI, { Loading, Message } from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
-import VueAxios from 'vue-axios'
+import { createApp } from 'vue'
+import ElementPlus, { ElLoading, ElMessage } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import 'element-plus/dist/index.css'
 import axios from 'axios'
 import qs from 'qs'
 
@@ -9,11 +9,6 @@ import App from './App.vue'
 import router from './router/nav_index'
 import './assets/css/global.css'
 import { getToken, removeToken } from './utils/auth'
-
-Vue.config.productionTip = false
-Vue.use(ElementUI, { size: 'medium' })
-Vue.use(VueAxios, axios)
-Vue.prototype.$qs = qs
 
 // 开发环境走 vite 代理，生产环境可通过 VITE_API_BASE 指定后端地址
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE || '/api/'
@@ -24,7 +19,7 @@ let loadingInstance = null
 
 function openLoading() {
   if (loadingCount === 0) {
-    loadingInstance = Loading.service({
+    loadingInstance = ElLoading.service({
       fullscreen: true,
       text: '加载中...',
       background: 'rgba(0, 0, 0, 0.15)'
@@ -47,8 +42,8 @@ function handleUnauthorized(message) {
   removeToken()
   if (unauthorizedLock) return
   unauthorizedLock = true
-  Message.error(message || '登录已失效，请重新登录')
-  const current = router.currentRoute
+  ElMessage.error(message || '登录已失效，请重新登录')
+  const current = router.currentRoute.value
   if (current.path !== '/login') {
     router.replace({ path: '/login', query: { redirect: current.fullPath } })
   }
@@ -93,17 +88,20 @@ axios.interceptors.response.use(
     if (response && response.status === 401) {
       handleUnauthorized(meta && meta.msg)
     } else if (error.code === 'ECONNABORTED') {
-      Message.error('请求超时，请稍后重试')
+      ElMessage.error('请求超时，请稍后重试')
     } else if (!response) {
-      Message.error('无法连接服务器，请检查后端是否启动')
+      ElMessage.error('无法连接服务器，请检查后端是否启动')
     } else {
-      Message.error((meta && meta.msg) || '请求失败，请稍后重试')
+      ElMessage.error((meta && meta.msg) || '请求失败，请稍后重试')
     }
     return Promise.reject(error)
   }
 )
 
-new Vue({
-  router,
-  render: h => h(App)
-}).$mount('#app')
+const app = createApp(App)
+app.use(router)
+app.use(ElementPlus, { locale: zhCn })
+// 组件内通过 this.$http 使用统一配置好的 axios 实例
+app.config.globalProperties.$http = axios
+app.config.globalProperties.$qs = qs
+app.mount('#app')

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!--导航区域-->
-    <el-breadcrumb separator-class="el-icon-arrow-right">
+    <el-breadcrumb :separator-icon="ArrowRight">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>文件管理</el-breadcrumb-item>
       <el-breadcrumb-item>文件大厅</el-breadcrumb-item>
@@ -11,7 +11,9 @@
       <el-row :gutter="20" class="toolbar">
         <el-col :span="8">
           <el-input placeholder="请输入文档名称" v-model="queryInfo.query" clearable @clear="getDocList">
-            <el-button slot="append" icon="el-icon-search" @click="getDocList"></el-button>
+            <template #append>
+              <el-button :icon="Search" @click="getDocList"></el-button>
+            </template>
           </el-input>
         </el-col>
       </el-row>
@@ -25,8 +27,8 @@
         <el-table-column label="上传者ID" width="100" prop="uid"></el-table-column>
         <el-table-column label="描述" min-width="180" prop="docdescribe" show-overflow-tooltip></el-table-column>
         <el-table-column label="操作" width="120" align="center">
-          <template v-slot="scope">
-            <el-button size="mini" type="primary" icon="el-icon-download"
+          <template #default="scope">
+            <el-button size="small" type="primary" :icon="Download"
                        :loading="downloadingId === scope.row.id"
                        @click="downloadDoc(scope.row)"></el-button>
           </template>
@@ -48,10 +50,14 @@
 </template>
 
 <script>
+import { ArrowRight, Search, Download } from '@element-plus/icons-vue'
 import { formatDate, formatFileSize } from '../utils/format'
 
 export default {
   name: 'Doc_hall',
+  setup() {
+    return { ArrowRight, Search, Download }
+  },
   data() {
     return {
       queryInfo: {
@@ -67,7 +73,7 @@ export default {
   methods: {
     async getDocList() {
       try {
-        const { data: res } = await this.axios.get('/halldoclist', { params: this.queryInfo })
+        const { data: res } = await this.$http.get('/halldoclist', { params: this.queryInfo })
         if (res.meta.status !== 200) return this.$message.error(res.meta.msg || '获取文档列表失败')
         this.doclist = res.data.docs || []
         this.total = res.data.total
@@ -86,7 +92,7 @@ export default {
     async downloadDoc(row) {
       this.downloadingId = row.id
       try {
-        const res = await this.axios.get('/download', {
+        const res = await this.$http.get('/download', {
           params: { id: row.id },
           responseType: 'blob'
         })

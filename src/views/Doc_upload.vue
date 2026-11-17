@@ -1,7 +1,7 @@
 <template>
   <div>
     <!--导航区域-->
-    <el-breadcrumb separator-class="el-icon-arrow-right">
+    <el-breadcrumb :separator-icon="ArrowRight">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>文件管理</el-breadcrumb-item>
       <el-breadcrumb-item>文件上传</el-breadcrumb-item>
@@ -37,7 +37,9 @@
             :limit="1"
             accept=".doc,.docx,.pdf,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar,7z">
             <el-button size="small" type="primary">选取文件</el-button>
-            <span class="upload_tip">单个文件不超过 50MB，仅支持常用文档格式</span>
+            <template #tip>
+              <span class="upload_tip">单个文件不超过 50MB，仅支持常用文档格式</span>
+            </template>
           </el-upload>
         </el-form-item>
         <el-form-item>
@@ -50,10 +52,14 @@
 </template>
 
 <script>
+import { ArrowRight } from '@element-plus/icons-vue'
 import { getToken } from '../utils/auth'
 
 export default {
   name: 'Doc_upload',
+  setup() {
+    return { ArrowRight }
+  },
   data() {
     return {
       uploading: false,
@@ -75,7 +81,7 @@ export default {
   },
   computed: {
     uploadUrl() {
-      return (this.axios.defaults.baseURL || '/api/') + 'docupload'
+      return (this.$http.defaults.baseURL || '/api/') + 'docupload'
     },
     uploadHeaders() {
       return { token: getToken() }
@@ -142,6 +148,5 @@ export default {
   .upload_tip {
     color: #909399;
     font-size: 12px;
-    margin-left: 10px;
   }
 </style>
