@@ -3,58 +3,79 @@
     <!--导航区域-->
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item>导航</el-breadcrumb-item>
       <el-breadcrumb-item>我的桌面</el-breadcrumb-item>
     </el-breadcrumb>
 
-    <el-card class="box-card-control">
-    <el-col :span="20">
-      <el-card class="box-card" shadow="hover" style="float: left">
-        <div class="text item">
-          <h2>欢迎来到ONCLOUD，{{userInfo.username}}！</h2>
-          <h2>您的身份：{{userInfo.role}}</h2>
-          <h2>您的状态：{{userInfo.state == 1 ? '已启用' : '未启用'}}</h2>
-        </div>
-      </el-card>
-      <el-card class="box-card" shadow="hover" style="float: left">
-        <div class="text item">
-          <h1>当前时间：{{date}}</h1>
-        </div>
-      </el-card>
-    </el-col>
-    </el-card>
+    <el-row :gutter="20">
+      <el-col :span="12">
+        <el-card shadow="hover">
+          <div slot="header">个人信息</div>
+          <p class="line">欢迎来到 ONCLOUD，{{ userInfo.username }}！</p>
+          <p class="line">您的身份：{{ userInfo.role }}</p>
+          <p class="line">您的状态：{{ userInfo.state == 1 ? '已启用' : '已停用' }}</p>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card shadow="hover">
+          <div slot="header">当前时间</div>
+          <p class="clock">{{ now }}</p>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
-  export default {
-    name: "Tabletop",
-    data() {
-      return {
-        //用户对象
-        userInfo: {},
-        date: ''
-      }
-    },
-    methods: {
-      async getUserInfo(){
-        await this.axios.get('/user').then((resp => {
-          this.userInfo = resp.data.data
-        }))
-      }
-    },
-    created() {
-      this.getUserInfo()
-      this.date = new Date()
+import { formatDate } from '../utils/format'
+
+export default {
+  name: 'Tabletop',
+  data() {
+    return {
+      userInfo: {},
+      now: '',
+      timer: null
     }
+  },
+  methods: {
+    async getUserInfo() {
+      try {
+        const { data: res } = await this.axios.get('/user')
+        if (res.meta.status === 200) {
+          this.userInfo = res.data
+        }
+      } catch (e) {
+        // 错误提示已由拦截器统一处理
+      }
+    },
+    updateTime() {
+      const date = new Date()
+      const time = date.toTimeString().slice(0, 8)
+      this.now = `${formatDate(date)} ${time}`
+    }
+  },
+  created() {
+    this.getUserInfo()
+    this.updateTime()
+    this.timer = window.setInterval(this.updateTime, 1000)
+  },
+  beforeDestroy() {
+    window.clearInterval(this.timer)
   }
+}
 </script>
 
 <style scoped>
-  .text {
-    font-size: 14px;
+  .line {
+    font-size: 16px;
+    line-height: 1.8;
+    margin: 0;
   }
-  .box-card {
-    width: 480px;
+
+  .clock {
+    font-size: 26px;
+    font-weight: bold;
+    color: #9dae28;
+    margin: 10px 0;
   }
 </style>

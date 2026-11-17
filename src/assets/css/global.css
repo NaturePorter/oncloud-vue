@@ -1,11 +1,22 @@
 /**
 全局样式表
  */
-html, body, #app{
+html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
 }
-.el-breadcrumb{
+
+body {
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  color: #303133;
+  -webkit-font-smoothing: antialiased;
+}
+
+.el-breadcrumb {
   margin-bottom: 15px;
+}
+
+.box-card {
+  min-height: 200px;
 }

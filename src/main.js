@@ -1,70 +1,109 @@
-// The Vue build version to load with the `import` command
-// (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import App from './App'
-import {Message,Loading} from 'element-ui'
-
-//导航页路由
-import router from './router/nav_index'
-
-Vue.use(router);
-
-//element-ui
-import ElementUI from 'element-ui'
+import ElementUI, { Loading, Message } from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
-
-Vue.use(ElementUI);
-//axios
-import axios from 'axios'
 import VueAxios from 'vue-axios'
-
-// 权限校验加入方法
-import { isAuth } from '@/utils'
-
-Vue.use(VueAxios, axios);
-
-//导入全局样式
-import './assets/css/global.css'
-
-//在main.js引入qs
+import axios from 'axios'
 import qs from 'qs'
-//配全局属性配置，在任意组件内可以使用this.$qs获取qs对象
-Vue.prototype.$qs = qs;
 
-//配置请求的根路径
-axios.defaults.baseURL = 'http://localhost:8797/api/'
-//axios拦截器，拦截请求使其带上 token 的令牌
-axios.interceptors.request.use(config => {
-  config.headers.token = window.sessionStorage.getItem('token');
-  Loading.service({text:"Loading..."});
-  return config
-}, err => {
-  Message.error({message: '请求超时!'});
-  return Promise.resolve(err);
-});
-//axios响应拦截器
-axios.interceptors.response.use(res => {
-  Loading.service().close();
-  console.log(res.data.meta.status)
-  if (res.data.meta && res.data.meta.status === 401) { // 401, token失效
-    //clearLoginInfo()
-    router.push({ name: 'login' })
+import App from './App.vue'
+import router from './router/nav_index'
+import './assets/css/global.css'
+import { getToken, removeToken } from './utils/auth'
+
+Vue.config.productionTip = false
+Vue.use(ElementUI, { size: 'medium' })
+Vue.use(VueAxios, axios)
+Vue.prototype.$qs = qs
+
+// 开发环境走 vite 代理，生产环境可通过 VITE_API_BASE 指定后端地址
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE || '/api/'
+axios.defaults.timeout = 30000
+
+let loadingCount = 0
+let loadingInstance = null
+
+function openLoading() {
+  if (loadingCount === 0) {
+    loadingInstance = Loading.service({
+      fullscreen: true,
+      text: '加载中...',
+      background: 'rgba(0, 0, 0, 0.15)'
+    })
   }
-  return res;
-}, err => {
-  Loading.service().close();
-  return Promise.reject(err);
-})
+  loadingCount += 1
+}
 
+function closeLoading() {
+  if (loadingCount > 0) loadingCount -= 1
+  if (loadingCount === 0 && loadingInstance) {
+    loadingInstance.close()
+    loadingInstance = null
+  }
+}
 
-Vue.config.productionTip = false;
+let unauthorizedLock = false
 
-Vue.prototype.isAuth = isAuth     // 权限方法
+function handleUnauthorized(message) {
+  removeToken()
+  if (unauthorizedLock) return
+  unauthorizedLock = true
+  Message.error(message || '登录已失效，请重新登录')
+  const current = router.currentRoute
+  if (current.path !== '/login') {
+    router.replace({ path: '/login', query: { redirect: current.fullPath } })
+  }
+  window.setTimeout(() => {
+    unauthorizedLock = false
+  }, 1500)
+}
 
-/* eslint-disable no-new */
+axios.interceptors.request.use(
+  config => {
+    const token = getToken()
+    if (token) {
+      config.headers.token = token
+    }
+    if (!config.noLoading) openLoading()
+    return config
+  },
+  error => {
+    closeLoading()
+    return Promise.reject(error)
+  }
+)
+
+axios.interceptors.response.use(
+  response => {
+    closeLoading()
+    // 文件下载等二进制响应直接返回
+    if (response.config.responseType === 'blob') {
+      return response
+    }
+    const meta = response.data && response.data.meta
+    // 仅当本地已存在登录态时才按“登录失效”处理，避免登录失败被重复提示
+    if (meta && meta.status === 401 && getToken()) {
+      handleUnauthorized(meta.msg)
+    }
+    return response
+  },
+  error => {
+    closeLoading()
+    const response = error.response
+    const meta = response && response.data && response.data.meta
+    if (response && response.status === 401) {
+      handleUnauthorized(meta && meta.msg)
+    } else if (error.code === 'ECONNABORTED') {
+      Message.error('请求超时，请稍后重试')
+    } else if (!response) {
+      Message.error('无法连接服务器，请检查后端是否启动')
+    } else {
+      Message.error((meta && meta.msg) || '请求失败，请稍后重试')
+    }
+    return Promise.reject(error)
+  }
+)
+
 new Vue({
-  el: '#app',
-  router, //配置路由
-  components: {App},
-  template: '<App/>'
-});
+  router,
+  render: h => h(App)
+}).$mount('#app')
