@@ -54,7 +54,7 @@ location /api/ {
 
 - 原项目缺少 `build/` 目录（webpack 配置从未提交），且 `webpack 3 + node-sass 4` 无法在
   现代 Node 环境运行，`npm run dev/build` 完全不可用。
-- 迁移到 **Vite 5 + Vue 2.7**，保留原有 Vue 2 / Element UI 写法与页面结构，删除失效的
+- 迁移到 **Vite 6 + Vue 2.7**，保留原有 Vue 2 / Element UI 写法与页面结构，删除失效的
   webpack/babel 配置，开发与构建可直接在 Node 18+ 运行。
 
 ### 功能缺陷
