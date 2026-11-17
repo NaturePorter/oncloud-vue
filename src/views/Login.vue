@@ -126,8 +126,7 @@ export default {
     box-sizing: border-box;
   }
 
-  .btns {
-    display: flex;
+  .btns :deep(.el-form-item__content) {
     justify-content: center;
   }
 </style>
